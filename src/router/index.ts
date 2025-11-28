@@ -6,6 +6,7 @@ import { isLoggedIn } from '../stores/authStore';
 
 const routes = [
   { path: '/', component: HelloWorld },
+  
   {
     path: '/login',
     name: 'login',
@@ -22,6 +23,12 @@ const routes = [
     component: employees,
     meta: { requiresAuth: true }
    },
+   {
+  path: "/employees/edit/:id",
+  name: "edit-employee",
+  component: () => import("../pages/Edit-Employee.vue"),
+  meta: { requiresAuth: true }
+}
 ];
 
 const router = createRouter({

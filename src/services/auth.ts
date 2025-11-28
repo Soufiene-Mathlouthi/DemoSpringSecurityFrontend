@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { LoginRequest, LoginResponse } from './types';
 import { setLogin, setLogout } from '../stores/authStore';
+import router from '../router';
 
 const API_URL = 'http://localhost:8080/api/auth';
 
@@ -16,6 +17,17 @@ export async function loginUser(credentials: LoginRequest): Promise<LoginRespons
 
   return response.data;
 }
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function getAuthHeaders(): { Authorization?: string } {
   const token = localStorage.getItem('token');
