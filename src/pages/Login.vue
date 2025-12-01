@@ -48,6 +48,7 @@ import { useRouter } from 'vue-router';
 import { loginUser } from '../services/auth';
 import type { LoginRequest } from '../services/types';
 import { QForm } from 'quasar';
+import { notifyError } from '../utils/Notify';
 
 export default defineComponent({
   setup() {
@@ -75,6 +76,7 @@ export default defineComponent({
         //console.log('Login successful, token stored.', response.token);
         router.push('/employees-list');
       } catch (err) {
+        notifyError('Login failed: Invalid username or password');
         error.value = 'Invalid username or password';
         //console.error(err);
       } finally {

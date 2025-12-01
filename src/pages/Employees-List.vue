@@ -69,7 +69,6 @@ async function deleteEmployee(id: number) {
 
     if (status === 403) {
       notifyError("You do not have permission to delete this employee");
-
     }
 
     else if (status === 401) {

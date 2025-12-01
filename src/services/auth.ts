@@ -3,8 +3,8 @@ import type { LoginRequest, LoginResponse } from './types';
 import { setLogin, setLogout } from '../stores/authStore';
 import router from '../router';
 
-const AUTH_URL  = import.meta.env.VITE_AUTH_URL || 'http://localhost:8080/api/auth';
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const AUTH_URL  = import.meta.env.VITE_AUTH_URL 
+const API_URL = import.meta.env.VITE_API_URL
 
 // Create an Axios instance for protected API calls
 const api = axios.create({
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       setLogout();
       router.push('/login');
     }
-    return Promise.reject(error);
+    return Promise.resolve(error);
   }
 );
 
