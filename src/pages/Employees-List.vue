@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import { notifySuccess, notifyError } from "../utils/Notify";
 
 interface Employee {
   id: number;
@@ -30,7 +31,7 @@ async function fetchEmployees() {
 
     employees.value = res.data;
   } catch (err: any) {
-    console.error("Error fetching employees:", err);
+    //console.error("Error fetching employees:", err);
     error.value = "Failed to fetch employees";
     if (err.response && err.response.status === 401) {
       router.push("/login");
@@ -44,20 +45,44 @@ onMounted(fetchEmployees);
 
 // DELETE employee
 async function deleteEmployee(id: number) {
-  if (!confirm("Are you sure you want to delete this employee?")) return;
+  const confirmed = confirm("Are you sure you want to delete this employee?");
+  if (!confirmed) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+   notifyError("You are not authorized. Please log in.");
+    return;
+  }
 
   try {
-    const token = localStorage.getItem("token");
-
     await axios.delete(`/api/employees/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     employees.value = employees.value.filter(emp => emp.id !== id);
-  } catch (error) {
-    console.error("Error deleting employee:", error);
+
+    notifySuccess("Employee deleted successfully");
+
+  } catch (err: any) {
+
+    const status = err?.response?.status;
+
+    if (status === 403) {
+      notifyError("You do not have permission to delete this employee");
+
+    }
+
+    else if (status === 401) {
+      notifyError("Session expired. Please log in again.");
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
+
+    else {
+      notifyError("Error deleting employee");
+    }
+
+    //console.error(err);
   }
 }
 
@@ -68,6 +93,12 @@ function editEmployee(id: number) {
 
 <template>
   <q-page padding>
+    <q-btn
+      color="primary"
+      class="q-mb-md"
+      label="Add Employee"
+      @click="router.push('/employees/edit/new')"
+    />
     <div v-if="loading" class="text-center q-pa-md">
       <q-spinner-dots color="primary" size="50px" />
       <div>Loading employees...</div>

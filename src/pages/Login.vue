@@ -72,11 +72,11 @@ export default defineComponent({
       try {
         const response = await loginUser(credentials);
         localStorage.setItem('token', response.token);
-        console.log('Login successful, token stored.', response.token);
+        //console.log('Login successful, token stored.', response.token);
         router.push('/employees-list');
       } catch (err) {
         error.value = 'Invalid username or password';
-        console.error(err);
+        //console.error(err);
       } finally {
         loading.value = false;
       }

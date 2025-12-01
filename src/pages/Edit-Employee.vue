@@ -3,6 +3,8 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { QForm } from "quasar";
+import { notifySuccess, notifyError } from "../utils/Notify";
+
 
 interface Employee {
   id: number;
@@ -22,88 +24,91 @@ const employee = ref<Employee>({
   email: "",
 });
 
-const loading = ref(true);
+const loading = ref(false);
 const error = ref("");
 
-const employeeId = Number(route.params.id);
+const employeeId = route.params.id ? Number(route.params.id) : null;
+const isEdit = !!employeeId;
 
-// Load employee data
+// Load employee data if editing
 async function fetchEmployee() {
+  if (!isEdit) return;
+
   loading.value = true;
   error.value = "";
 
   try {
     const token = localStorage.getItem("token");
-
     const res = await axios.get(`/api/employees/${employeeId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` },
     });
-
     employee.value = res.data;
-    employee.value.id = employeeId;
-    console.log("Loaded employee:", employee.value);
+    employee.value.id = employeeId!;
   } catch (err: any) {
-    console.error("Error loading employee:", err);
-    error.value = "Failed to load employee data";
+    notifyError("Failed to load employee data");
+    if (err.response?.status === 401) router.push("/login");
+  } finally {
+    loading.value = false;
+  }
+}
 
-    if (err.response && err.response.status === 401) {
+// Combined handler for add or edit
+async function submitEmployee() {
+  loading.value = true;
+  error.value = "";
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
       router.push("/login");
+      return;
     }
+
+    if (isEdit) {
+      // Update employee
+      await axios.put("/api/employees", employee.value, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+    } else {
+      // Add new employee
+      await axios.post("/api/employees", employee.value, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+    notifySuccess(`Employee ${isEdit ? "updated" : "added"} successfully`);
+    router.push("/employees-list");
+  } catch (err: any) {
+    notifyError("Failed to save employee data");
+    if (err.response?.status === 401) router.push("/login");
   } finally {
     loading.value = false;
   }
 }
 
 onMounted(fetchEmployee);
-
-// Save updated employee
-async function updateEmployee() {
-  loading.value = true;
-  error.value = "";
-
-  try {
-    const token = localStorage.getItem("token");
-
-    // Send entire employee object, including ID, in body
-    await axios.put(
-      "http://localhost:8080/api/employees",
-      employee.value,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    router.push("/employees-list");
-  } catch (err: any) {
-    console.error("Error updating employee:", err);
-    error.value = "Failed to update employee";
-
-    if (err.response && err.response.status === 401) {
-      router.push("/login");
-    }
-  }
-}
 </script>
 
 <template>
   <q-page padding>
     <q-card class="q-pa-lg" style="max-width: 500px; margin: auto;">
       <q-card-section>
-        <div class="text-h5 q-mb-md text-center">Edit Employee</div>
+        <div class="text-h5 q-mb-md text-center">
+          {{ isEdit ? "Edit Employee" : "Add New Employee" }}
+        </div>
 
         <div v-if="loading" class="text-center q-pa-md">
           <q-spinner-dots color="primary" size="40px" />
-          <div>Loading employee...</div>
+          <div>{{ isEdit ? "Loading employee..." : "Preparing form..." }}</div>
         </div>
 
         <div v-else>
-          <q-form ref="formRef" @submit.prevent="updateEmployee">
-
+          <q-form ref="formRef" @submit.prevent="submitEmployee">
             <q-input
               v-model="employee.firstName"
               label="First Name"
@@ -136,7 +141,7 @@ async function updateEmployee() {
             />
 
             <q-btn
-              label="Save Changes"
+              :label="isEdit ? 'Save Changes' : 'Add Employee'"
               type="submit"
               color="primary"
               unelevated
