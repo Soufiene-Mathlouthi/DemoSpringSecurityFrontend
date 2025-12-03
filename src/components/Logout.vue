@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { isLoggedIn } from '../stores/authStore';
+import { isLoggedIn, setLogout } from '../stores/authStore';
 import { logout } from '../services/auth';
 import { useRouter } from 'vue-router';
 
@@ -17,6 +17,7 @@ const router = useRouter();
 
 function handleLogout() {
   logout();
+  setLogout();
   router.push('/login');
 }
 </script>

@@ -10,7 +10,7 @@
             label="Username"
             outlined
             dense
-            :rules="[val => !!val || 'Username is required']"
+            :rules="[(val) => !!val || 'Username is required']"
             lazy-rules
           />
           <q-input
@@ -19,11 +19,10 @@
             type="password"
             outlined
             dense
-            :rules="[val => !!val || 'Password is required']"
+            :rules="[(val) => !!val || 'Password is required']"
             lazy-rules
             class="q-mt-md"
           />
-
           <q-btn
             label="Login"
             type="submit"
@@ -32,9 +31,22 @@
             :loading="loading"
             :disable="loading"
           />
+          <q-btn
+            flat
+            label="Don't have an account? Sign up"
+            color="primary"
+            class="full-width q-mt-sm"
+            @click="$router.push('/signup')"
+          />
         </q-form>
 
-        <q-banner v-if="error" class="q-mt-md text-center text-italic" dense color="secondary" icon="error">
+        <q-banner
+          v-if="error"
+          class="q-mt-md text-center text-italic"
+          dense
+          color="secondary"
+          icon="error"
+        >
           {{ error }}
         </q-banner>
       </q-card-section>
@@ -43,18 +55,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { loginUser } from '../services/auth';
-import type { LoginRequest } from '../services/types';
-import { QForm } from 'quasar';
-import { notifyError } from '../utils/Notify';
+import { defineComponent, ref } from "vue";
+import { useRouter } from "vue-router";
+import { loginUser } from "../services/auth";
+import type { LoginRequest } from "../services/types";
+import { QForm } from "quasar";
+import { notifyError } from "../utils/Notify";
+import { setLogin } from "../stores/authStore";
 
 export default defineComponent({
   setup() {
-    const username = ref('');
-    const password = ref('');
-    const error = ref('');
+    const username = ref("");
+    const password = ref("");
+    const error = ref("");
     const loading = ref(false);
     const router = useRouter();
     const formRef = ref<QForm | null>(null);
@@ -63,7 +76,7 @@ export default defineComponent({
       if (!formRef.value?.validate()) return;
 
       loading.value = true;
-      error.value = '';
+      error.value = "";
 
       const credentials: LoginRequest = {
         username: username.value,
@@ -72,13 +85,11 @@ export default defineComponent({
 
       try {
         const response = await loginUser(credentials);
-        localStorage.setItem('token', response.token);
-        //console.log('Login successful, token stored.', response.token);
-        router.push('/employees-list');
+        setLogin(response.token, response.role);
+        router.push("/employees-list");
       } catch (err) {
-        notifyError('Login failed: Invalid username or password');
-        error.value = 'Invalid username or password';
-        //console.error(err);
+        notifyError("Login failed: Invalid username or password");
+        error.value = "Invalid username or password";
       } finally {
         loading.value = false;
       }

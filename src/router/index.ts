@@ -3,6 +3,7 @@ import Login from '../pages/Login.vue';
 import employees from '../pages/Employees-List.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import { isLoggedIn } from '../stores/authStore';
+import SignUp from '../pages/SignUp.vue';
 
 const routes = [
   { path: '/', component: HelloWorld },
@@ -19,6 +20,7 @@ const routes = [
       }
     }
   },
+  { path: '/signup', component: SignUp },
   { path: '/employees-list', 
     component: employees,
     meta: { requiresAuth: true }
